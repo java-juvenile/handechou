@@ -1,9 +1,8 @@
-package tcp;
+package com.maxwit.course;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class WitCat {
     private ServerSocket serverSocket;
@@ -14,13 +13,19 @@ public class WitCat {
 
     public void connect() {
         String theContents = "";
+        String responeProtocol = "HTTP/1.1";
+        String responseStatusCode = "200";
+        String responseStatus = "OK";
         while (true) {
             try {
                 Socket server = serverSocket.accept();
 
                 //get file path from client
                 DataInputStream getInfo = new DataInputStream(server.getInputStream());
-                String filePath = getInfo.readUTF();
+                String requestHeader = getInfo.readUTF();
+                String[] tolist = requestHeader.split(" ");
+                String filePath = tolist[1];
+                
                 //find file at local
                 File file = new File("." + filePath);
                 if (!file.exists()){
@@ -35,7 +40,8 @@ public class WitCat {
                 //send to client
                 OutputStream toclient = server.getOutputStream();
                 DataOutputStream writeTo = new DataOutputStream(toclient);
-                writeTo.writeUTF(theContents);
+                String responseHeader = responeProtocol + " " + responseStatusCode + " " + responseStatus + " " + theContents;
+                writeTo.writeUTF(responseHeader);
 
                 server.close();
 

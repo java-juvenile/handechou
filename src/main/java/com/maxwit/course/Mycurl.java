@@ -8,23 +8,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class Mycurl {
     public static void main(String[] args) {
         String serverName = args[0];
         int port = Integer.parseInt(args[1]);
         String filePath = args[2];
+        String requestMethd = "Get";
+        String requestProtocol = " HTTP/1.1";
+        String requestHeader = requestMethd + " " + filePath + " " + requestProtocol;
 
         try {
             Socket curl = new Socket(serverName, port);            
             OutputStream toServer = curl.getOutputStream();
             DataOutputStream out = new DataOutputStream(toServer);
-            out.writeUTF(filePath);
+            out.writeUTF(requestHeader);
 
             InputStream fromServer = curl.getInputStream();
             DataInputStream getInfo = new DataInputStream(fromServer);
-            String theContents = getInfo.readUTF();
+            String responseHeader = getInfo.readUTF();
+            String[] headerList = responseHeader.split(" ");
+            String theContents = headerList[headerList.length - 1];
             
             String[] list = filePath.split("/");
             String filename = list[list.length - 1];
