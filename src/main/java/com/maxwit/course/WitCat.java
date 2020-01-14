@@ -25,7 +25,6 @@ public class WitCat {
         InputStreamReader getInfo = new InputStreamReader(server.getInputStream());
         BufferedReader reader = new BufferedReader(getInfo);
         String requestHeader = reader.readLine();
-        System.out.println(requestHeader);
         String[] tolist = requestHeader.split(" ");
         filePath = "." + tolist[1];
     }
