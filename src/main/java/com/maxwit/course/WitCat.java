@@ -26,7 +26,11 @@ public class WitCat {
         BufferedReader reader = new BufferedReader(getInfo);
         String requestHeader = reader.readLine();
         String[] tolist = requestHeader.split(" ");
-        filePath = "." + tolist[1];
+        if(tolist[1].startsWith("/")) {
+            filePath = "." + tolist[1];
+        } else {
+            filePath = "./" + tolist[1];
+        }
     }
 
     public void readFile(File file) {
@@ -37,6 +41,7 @@ public class WitCat {
             try {
                 len = readfile.read(bytes);
                 responseMap.put("Content-Length", Integer.toString(len));
+                responseMap.put("Content-Type", "text/html");
                 responseMap.forEach((k, v) -> {contentLength += k + ": " + v + "\n";});
                 theContents = new String(bytes, 0, len);
                 readfile.close();
@@ -53,10 +58,12 @@ public class WitCat {
         OutputStream toclient;
         try {
             toclient = server.getOutputStream();
-            DataOutputStream writeTo = new DataOutputStream(toclient);
+            OutputStreamWriter write = new OutputStreamWriter(toclient);
+            BufferedWriter writeTo = new BufferedWriter(write);
             String responseHeader = responseLine + "\n"
                     + contentLength + "\n" + theContents;
-            writeTo.writeUTF(responseHeader);
+            writeTo.write(responseHeader);
+            contentLength = "";
             writeTo.flush();
             writeTo.close();
         } catch (IOException e) {

@@ -1,13 +1,9 @@
 package com.maxwit.course;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Mycurl {
     public static void main(String[] args) {
@@ -16,33 +12,45 @@ public class Mycurl {
         String filePath = args[2];
         String requestMethd = "Get";
         String requestProtocol = " HTTP/1.1";
-        String requestHeader = requestMethd + " " + filePath + " " + requestProtocol;
+        String requestLine = requestMethd + " " + filePath + " " + requestProtocol;
 
         try {
-            Socket curl = new Socket(serverName, port);            
+            Socket curl = new Socket(serverName, port);
+
             OutputStream toServer = curl.getOutputStream();
-            DataOutputStream out = new DataOutputStream(toServer);
-            out.writeUTF(requestHeader);
+            OutputStreamWriter out = new OutputStreamWriter(toServer);
+            BufferedWriter outServer = new BufferedWriter(out);
+            outServer.write(requestLine);
+            outServer.flush();
+            curl.shutdownOutput();
 
             InputStream fromServer = curl.getInputStream();
-            DataInputStream getInfo = new DataInputStream(fromServer);
-            String responseHeader = getInfo.readUTF();
-            String[] headerList = responseHeader.split(" ");
-            String theContents = headerList[headerList.length - 1];
-            
-            String[] list = filePath.split("/");
-            String filename = list[list.length - 1];
-            File downDir = new File("WitDownloads");
-            if (!downDir.exists()) {
-                downDir.mkdirs();
-            }
-            String downfile = downDir + "/" + filename; 
+            byte[] b = new byte[1024];
+            int len = fromServer.read(b);
+            String responseHeader = new String(b, 0, len);
+            String[] line = responseHeader.split("\n");
 
-            File downloadFile = new File(downfile);
-            if (!downloadFile.exists()){
-                downloadFile.createNewFile();
+            if (!line[0].contains("404")) {
+                String pattern = "(<.+>)(\\s+.+)+";
+                Pattern p = Pattern.compile(pattern);
+                Matcher matcher = p.matcher(responseHeader);
+                String theContents = matcher.group();
+
+                String[] list = filePath.split("/");
+                String filename = list[list.length - 1];
+                File downDir = new File("WitDownloads");
+                if (!downDir.exists()) {
+                    downDir.mkdirs();
+                }
+
+                String downfile = downDir + "/" + filename;
+                File downloadFile = new File(downfile);
+
+                if (!downloadFile.exists()){
+                    downloadFile.createNewFile();
+                }
+
                 FileOutputStream toDown = new FileOutputStream(downloadFile);
-            
                 toDown.write(theContents.getBytes());
                 toDown.close();
             }
